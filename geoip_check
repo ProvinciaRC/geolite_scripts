@@ -1,0 +1,42 @@
+#!/usr/bin/python
+
+import os, sys, traceback
+import GeoIP
+
+ALLOW = 0
+DENY = 1
+
+when_error = ALLOW
+
+def rule(code):
+    if code == "IT": return ALLOW
+    if code == None: return ALLOW
+    return DENY
+
+exitcode = when_error
+
+try:
+    log = os.popen("logger -t geoip/check -p daemon.notice", "w")
+    sys.stdout = log
+    sys.stderr = log
+
+    if len(sys.argv) != 2:
+        sys.stderr.write("Usage: %s ipaddress\n" % sys.argv[0])
+        sys.exit(0)
+    addr = sys.argv[1]
+
+    datafile = os.path.join(os.path.dirname(__file__), "GeoIP.dat")
+
+    g = GeoIP.open(datafile, GeoIP.GEOIP_STANDARD)
+    if not g:
+        sys.exit(0)
+    code = g.country_code_by_addr(addr)
+    exitcode = rule(code)
+    print "%s %s %s" % (addr, code, exitcode and "deny" or "allow")
+except SystemExit:
+    pass
+except:
+    traceback.print_exception(sys.exc_type, sys.exc_value, sys.exc_traceback)
+
+sys.exit(exitcode)
+

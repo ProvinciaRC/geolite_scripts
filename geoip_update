@@ -1,0 +1,49 @@
+#!/usr/bin/python
+
+import os, urllib2, sys
+
+url = "http://geolite.maxmind.com/download/geoip/database/GeoLiteCountry/GeoIP.dat.gz"
+
+log = os.popen("logger -t geoip/update -p daemon.notice", "w")
+sys.stdout = log
+sys.stderr = log
+
+datadir = os.path.dirname(os.path.abspath(__file__))
+timestamp_file = os.path.join(datadir, "GeoIP.timestamp")
+tmpfile = os.path.join(datadir, "GeoIP.tmp")
+datfile = os.path.join(datadir, "GeoIP.dat")
+
+try:
+    timestamp = open(timestamp_file).read()
+except IOError:
+    timestamp = None
+
+headers = {}
+if timestamp:
+    headers["If-Modified-Since"] = timestamp
+request = urllib2.Request(url, headers=headers)
+try:
+    conn = urllib2.urlopen(request)
+except urllib2.HTTPError, e:
+    status = getattr(e, "code", None)
+    if status == 304:
+        print "Not Modified"
+        sys.exit(0)
+    else:
+        raise
+
+info = conn.info()
+timestamp = info.get("Last-Modified", "")
+
+tmp = os.popen("gunzip >%s" % tmpfile, "w")
+while True:
+    buf = conn.read(4096)
+    if not buf:
+        break
+    tmp.write(buf)
+tmp.close()
+
+os.rename(tmpfile, datfile)
+open(timestamp_file, "w").write(timestamp)
+print "Updated to %r" % timestamp
+
