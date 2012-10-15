@@ -23,13 +23,16 @@ geolite geoip downloader &amp; check IP scripts from http://ts1-en.blogspot.it/
 >This setup can be used for other services such as FTP.
 
 on CentOS
+
+In CentOS aclexec is missing, so we put all ip that try to access from a specified country into a allow file so they can acces at their second attempt
+
 ```
 yum install geoip
 yum install python-GeoIP
 ```
 clone git (or download) and put '**geoip_check**' and  '**geoip_update**' somewhere like '/usr/local/share/geolite_scripts/' and make executables
 
-modify in **geoip_update** "IT" with your country code:
+modify in **geoip_check** "IT" with your country code:
 ```python
 ...
 def rule(code):
@@ -46,7 +49,9 @@ crontab:
 ```
 hosts.allow:
 ```
-sshd : ALL : spawn /usr/local/share/geolite_scripts/geoip_check %a
+sshd : /etc/hosts.allowed_by_country : ALLOW
+sshd : ALL : spawn /usr/local/share/geolite_scripts/geoip_check %a /etc/hosts.allowed_by_country : DENY
+sshd : ALL : DENY
 ```
 
 hosts.deny
