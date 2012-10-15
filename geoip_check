@@ -13,6 +13,11 @@ def rule(code):
     if code == None: return ALLOW
     return DENY
 
+def append_address(value, filename):
+    with open(filename, 'a+') as f:
+        if not any(value == x.rstrip('\r\n') for x in f):
+            f.write(value + '\n')    
+
 exitcode = when_error
 
 try:
@@ -37,7 +42,8 @@ try:
     print "%s %s %s" % (addr, code, exitcode and "deny" or "allow")
     if (exitcode==0 and allowed_ip_file):
         try:
-            open(allowed_ip_file,"a").write(addr)
+            #open(allowed_ip_file,"a").write(addr)
+            append_address(str(addr), allowed_ip_file)
         except:
             print "could not append '%s' to '%s'" % (addr, allowed_ip_file)
 except SystemExit:
