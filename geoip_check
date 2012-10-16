@@ -14,9 +14,12 @@ def rule(code):
     return DENY
 
 def append_address(value, filename):
-    with open(filename, 'a+') as f:
+    f = open(filename, 'a+')
+    try:
         if not any(value == x.rstrip('\r\n') for x in f):
-            f.write(value + '\n')    
+            f.write(value + '\n')
+    finally:
+        f.close()
 
 exitcode = when_error
 
