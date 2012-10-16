@@ -7,6 +7,8 @@ ALLOW = 0
 DENY = 1
 
 when_error = ALLOW
+exitcode = when_error
+
 
 def rule(code):
     if code == "IT": return ALLOW
@@ -14,14 +16,19 @@ def rule(code):
     return DENY
 
 def append_address(value, filename):
-    f = open(filename, 'a+')
+    host = str(value)
+    logfile = open(filename, 'a+')
     try:
-        if not any(value == x.rstrip('\r\n') for x in f):
-            f.write(value + '\n')
-    finally:
-        f.close()
+        for line in logfile:
+            if line.strip() == host:
+                return
 
-exitcode = when_error
+        # Move to the end of the file:
+        logfile.seek(0, 2)
+        logfile.write(host + "\n")
+
+    finally:
+        logfile.close()
 
 try:
     log = os.popen("logger -t geoip/check -p daemon.notice", "w")
